@@ -8,7 +8,6 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
 SECRET_KEY = b"NEXUS_SECURE_2026_KEY_32BYTES!!"
-
 clients = {}
 
 # ================= AES =================
@@ -26,17 +25,19 @@ def decrypt(data: str):
     cipher = AES.new(SECRET_KEY, AES.MODE_CBC, iv)
     return unpad(cipher.decrypt(encrypted), AES.block_size).decode()
 
-# ================= Handler =================
+# ================= HTTP keep alive =================
+
+async def process_request(path, request_headers):
+    return (200, [], b"Nexus Secure Chat Server Running")
+
+# ================= WebSocket Handler =================
 
 async def handler(websocket):
     username = None
     try:
         async for message in websocket:
-            try:
-                decrypted = decrypt(message)
-                data = json.loads(decrypted)
-            except:
-                continue
+            decrypted = decrypt(message)
+            data = json.loads(decrypted)
 
             if data["type"] == "login":
                 username = data["username"]
@@ -65,7 +66,12 @@ async def handler(websocket):
 
 async def main():
     port = int(os.environ.get("PORT", 10000))
-    server = await websockets.serve(handler, "0.0.0.0", port)
+    server = await websockets.serve(
+        handler,
+        "0.0.0.0",
+        port,
+        process_request=process_request
+    )
     print("Secure Nexus Chat 启动，端口", port)
     await server.wait_closed()
 
