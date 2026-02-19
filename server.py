@@ -173,9 +173,11 @@ async def handler(ws, path):
 # 启动服务
 # -----------------------------
 async def main():
-    server = await websockets.serve(handler, "0.0.0.0", 10000)
-    print("Secure Nexus Chat 服务启动，端口 10000")
+    port = int(os.environ.get("PORT", 10000))
+    server = await websockets.serve(handler, "0.0.0.0", port)
+    print(f"Secure Nexus Chat 启动，端口 {port}")
     await server.wait_closed()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
